@@ -138,6 +138,12 @@ Route::middleware(['auth', 'superadmin'])
         Route::get('/negocios/crear', [BusinessController::class, 'create'])
             ->name('businesses.create');
 
+        Route::get('/negocios/{business}/editar', [BusinessController::class, 'edit'])
+            ->name('businesses.edit');
+
+        Route::put('/negocios/{business}', [BusinessController::class, 'update'])
+            ->name('businesses.update');
+
         Route::post('/negocios', [BusinessController::class, 'store'])
             ->name('businesses.store');
         Route::patch(

@@ -59,9 +59,11 @@
                             <tr>
                                 <td class="px-5 py-4">
                                     <p class="font-semibold">{{ $business->name }}</p>
-                                    <p class="mt-1 text-xs text-gray-500">
-                                        /b/{{ $business->slug }}
-                                    </p>
+                                    <a href="{{ url('/reservar/' . $business->slug) }}"
+                                    target="_blank"
+                                    class="mt-1 block text-xs text-blue-600 hover:underline">
+                                        /reservar/{{ $business->slug }}
+                                    </a>
                                 </td>
                                 <td class="px-5 py-4">
                                     {{ [
@@ -89,31 +91,32 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <form
-                                        method="POST"
-                                        action="{{ route('admin.businesses.toggle-status', $business) }}"
-                                    >
-                                        @csrf
-                                        @method('PATCH')
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <a href="{{ route('admin.businesses.edit', $business) }}"
+                                        class="rounded-lg bg-indigo-100 px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-200">
+                                            Editar
+                                        </a>
 
-                                        @if ($business->status === 'active')
-                                            <button
-                                                type="submit"
-                                                class="rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-200"
-                                                onclick="return confirm('¿Seguro que deseas suspender este negocio?')"
-                                            >
-                                                Suspender
-                                            </button>
-                                        @else
-                                            <button
-                                                type="submit"
-                                                class="rounded-lg bg-green-100 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-200"
-                                                onclick="return confirm('¿Deseas reactivar este negocio?')"
-                                            >
-                                                Reactivar
-                                            </button>
-                                        @endif
-                                    </form>
+                                        <form method="POST"
+                                            action="{{ route('admin.businesses.toggle-status', $business) }}">
+                                            @csrf
+                                            @method('PATCH')
+
+                                            @if ($business->status === 'active')
+                                                <button type="submit"
+                                                        class="rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-200"
+                                                        onclick="return confirm('¿Seguro que deseas suspender este negocio?')">
+                                                    Suspender
+                                                </button>
+                                            @else
+                                                <button type="submit"
+                                                        class="rounded-lg bg-green-100 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-200"
+                                                        onclick="return confirm('¿Deseas reactivar este negocio?')">
+                                                    Reactivar
+                                                </button>
+                                            @endif
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
