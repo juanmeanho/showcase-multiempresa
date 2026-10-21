@@ -8,10 +8,15 @@ use App\Http\Controllers\BusinessServiceController;
 use App\Http\Controllers\BusinessEmployeeAvailabilityController;
 use App\Http\Controllers\PublicBookingController;
 use App\Http\Controllers\BusinessAppointmentController;
+use App\Http\Controllers\ServiceImageController;
 
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+// Imágenes públicas de los servicios
+Route::get('/service-images/{filename}', ServiceImageController::class)
+    ->name('service-images.show');
 
 // Reservas públicas para clientes
 Route::prefix('reservar/{business:slug}')

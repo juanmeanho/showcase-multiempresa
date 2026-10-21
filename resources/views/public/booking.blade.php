@@ -264,7 +264,7 @@
 
                                             @if ($service->image_path)
                                                 <img
-                                                    src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($service->image_path) }}"
+                                                    src="{{ route('service-images.show', ['filename' => basename($service->image_path)]) }}"
                                                     alt="{{ $service->name }}"
                                                     loading="lazy"
                                                     class="h-36 w-full object-cover transition duration-300 group-hover:scale-[1.02]">

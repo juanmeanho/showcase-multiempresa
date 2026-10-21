@@ -104,7 +104,7 @@
                     <p class="mb-2 text-sm text-gray-500">Imagen actual</p>
 
                     <img
-                        src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($service->image_path) }}"
+                        src="{{ route('service-images.show', ['filename' => basename($service->image_path)]) }}"
                         alt="{{ $service->name }}"
                         class="h-32 w-32 rounded-lg object-cover"
                     >
