@@ -55,4 +55,21 @@ class BusinessPanelController extends Controller
             'No tienes acceso a este negocio.'
         );
     }
+
+    public function toggleReservations(
+        Request $request,
+        Business $business
+    ): RedirectResponse {
+        $this->authorizeBusiness($request, $business);
+
+        $business->reservations_enabled = ! $business->reservations_enabled;
+        $business->save();
+
+        return back()->with(
+            'success',
+            $business->reservations_enabled
+                ? 'Las reservas se han reanudado.'
+                : 'Las reservas se han suspendido.'
+        );
+    }
 }

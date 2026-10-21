@@ -106,6 +106,48 @@
 
                 </article>
 
+                <div class="mt-4 rounded-lg border p-4
+                    {{ $business->reservations_enabled
+                        ? 'border-green-200 bg-green-50'
+                        : 'border-red-200 bg-red-50' }}">
+
+                    <p class="text-sm font-semibold
+                        {{ $business->reservations_enabled
+                            ? 'text-green-800'
+                            : 'text-red-800' }}">
+                        {{ $business->reservations_enabled
+                            ? 'Las reservas están activas'
+                            : 'Las reservas están suspendidas' }}
+                    </p>
+
+                    <form
+                        method="POST"
+                        action="{{ route('business.reservations.toggle', $business) }}"
+                        class="mt-3"
+                    >
+                        @csrf
+                        @method('PATCH')
+
+                        <button
+                            type="submit"
+                            class="rounded-lg px-4 py-2 text-sm font-medium text-white
+                                {{ $business->reservations_enabled
+                                    ? 'bg-red-600 hover:bg-red-700'
+                                    : 'bg-green-600 hover:bg-green-700' }}"
+                        >
+                            {{ $business->reservations_enabled
+                                ? 'Suspender reservas'
+                                : 'Reanudar reservas' }}
+                        </button>
+                    </form>
+                </div>
+
+                @if (session('success'))
+                    <p class="mt-3 text-sm text-green-700">
+                        {{ session('success') }}
+                    </p>
+                @endif
+
             </div>
         </section>
     </main>

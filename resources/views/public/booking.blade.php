@@ -10,7 +10,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap"
           rel="stylesheet">
@@ -88,6 +92,40 @@
         .primary-button:hover { opacity: .9; }
         .primary-button:active { transform: scale(.99); }
         .primary-button:disabled { opacity: .4; cursor: not-allowed; }
+
+        .flatpickr-calendar {
+            border: 1px solid #334155;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, .4);
+        }
+
+        .flatpickr-day.selected,
+        .flatpickr-day.startRange,
+        .flatpickr-day.endRange,
+        .flatpickr-day.selected:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #020617;
+            font-weight: 800;
+        }
+
+        .flatpickr-day.today {
+            border-color: var(--accent);
+        }
+
+        .flatpickr-day:hover {
+            background: #334155;
+            border-color: #334155;
+            color: #fff;
+        }
+
+        .flatpickr-months .flatpickr-month,
+        .flatpickr-current-month,
+        .flatpickr-weekdays,
+        span.flatpickr-weekday {
+            color: #f8fafc;
+        }
     </style>
 </head>
 
@@ -179,246 +217,275 @@
         </div>
     </section>
 
-    <form id="booking-form"
-          method="POST"
-          action="{{ route('booking.store', $business->slug) }}">
-        @csrf
+    @if (! $business->reservations_enabled)
+        <div class="rounded-xl border border-amber-300 bg-amber-50 p-5 text-center">
+            <p class="font-semibold text-amber-900">
+                Reservas suspendidas
+            </p>
 
-        <div class="grid items-start gap-6 lg:grid-cols-[1.25fr_.75fr]">
+            <p class="mt-1 text-sm text-amber-800">
+                En este momento no estamos aceptando nuevas reservas.
+            </p>
+        </div>
+    @else
+        {{-- Aquí conserva el formulario actual de reserva --}}
+            <form id="booking-form"
+                method="POST"
+                action="{{ route('booking.store', $business->slug) }}">
+                @csrf
 
-            <div class="space-y-6">
+                <div class="grid items-start gap-6 lg:grid-cols-[1.25fr_.75fr]">
 
-                <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 sm:p-6">
-                    <div class="mb-5 flex items-center gap-3">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-xl accent-bg font-extrabold">1</span>
-                        <div>
-                            <h3 class="font-bold text-white">Selecciona tu servicio</h3>
-                            <p class="text-xs text-slate-400">Elige el servicio que deseas reservar.</p>
-                        </div>
-                    </div>
+                    <div class="space-y-6">
 
-                    @if ($services->isEmpty())
-                        <p class="rounded-xl border border-slate-700 p-4 text-sm text-slate-400">
-                            Actualmente no hay servicios disponibles para reservar.
-                        </p>
-                    @else
-                        <div class="grid gap-3 sm:grid-cols-2">
-                            @foreach ($services as $service)
-                                <button type="button"
-                                        class="service-card group overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 text-left"
-                                        data-service-id="{{ $service->id }}"
-                                        data-service-name="{{ $service->name }}"
-                                        data-service-price="{{ $service->price }}"
-                                        data-service-duration="{{ $service->duration_minutes }}"
-                                        aria-pressed="false">
+                        <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 sm:p-6">
+                            <div class="mb-5 flex items-center gap-3">
+                                <span class="flex h-9 w-9 items-center justify-center rounded-xl accent-bg font-extrabold">1</span>
+                                <div>
+                                    <h3 class="font-bold text-white">Selecciona tu servicio</h3>
+                                    <p class="text-xs text-slate-400">Elige el servicio que deseas reservar.</p>
+                                </div>
+                            </div>
 
-                                    @if ($service->image_path)
-                                        <img
-                                            src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($service->image_path) }}"
-                                            alt="{{ $service->name }}"
-                                            loading="lazy"
-                                            class="h-36 w-full object-cover transition duration-300 group-hover:scale-[1.02]">
-                                    @else
-                                        <div class="flex h-28 items-center justify-center bg-gradient-to-br from-slate-800 to-slate-950">
-                                            <i class="fa-solid {{ $businessIcon }} text-3xl accent-text"></i>
-                                        </div>
-                                    @endif
-
-                                    <div class="p-3.5">
-                                        <div class="flex items-start justify-between gap-2">
-                                            <h4 class="text-sm font-bold text-white">
-                                                {{ $service->name }}
-                                            </h4>
-                                            <i class="fa-regular fa-circle accent-text service-check mt-0.5"></i>
-                                        </div>
-
-                                        @if ($service->description)
-                                            <p class="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">
-                                                {{ $service->description }}
-                                            </p>
-                                        @endif
-
-                                        <div class="mt-3 flex items-center justify-between gap-2">
-                                            <span class="text-base font-extrabold accent-text">
-                                                {{ number_format((float) $service->price, 2, ',', '.') }}
-                                            </span>
-                                            <span class="text-xs text-slate-400">
-                                                <i class="fa-regular fa-clock mr-1"></i>
-                                                {{ $service->duration_minutes }} min
-                                            </span>
-                                        </div>
-                                    </div>
-                                </button>
-                            @endforeach
-                        </div>
-                    @endif
-
-                    <input type="hidden" name="service_id" id="service_id" value="{{ old('service_id') }}">
-                </section>
-
-                <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 sm:p-6">
-                    <div class="mb-5 flex items-center gap-3">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-xl accent-bg font-extrabold">2</span>
-                        <div>
-                            <h3 class="font-bold text-white">Especialista y horario</h3>
-                            <p class="text-xs text-slate-400">Los horarios dependen del día y del especialista.</p>
-                        </div>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label for="employee_id" class="mb-1.5 block text-xs font-semibold text-slate-300">
-                                Especialista
-                            </label>
-                            <select id="employee_id" name="employee_id" required class="form-field">
-                                <option value="">Selecciona un especialista</option>
-                                @foreach ($employees as $employee)
-                                    <option value="{{ $employee->id }}"
-                                        @selected(old('employee_id') == $employee->id)>
-                                        {{ $employee->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            @if ($employees->isEmpty())
-                                <p class="mt-2 text-xs text-amber-300">
-                                    No hay especialistas activos disponibles para reservar.
+                            @if ($services->isEmpty())
+                                <p class="rounded-xl border border-slate-700 p-4 text-sm text-slate-400">
+                                    Actualmente no hay servicios disponibles para reservar.
                                 </p>
+                            @else
+                                <div class="grid gap-3 sm:grid-cols-2">
+                                    @foreach ($services as $service)
+                                        <button type="button"
+                                                class="service-card group overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 text-left"
+                                                data-service-id="{{ $service->id }}"
+                                                data-service-name="{{ $service->name }}"
+                                                data-service-price="{{ $service->price }}"
+                                                data-service-duration="{{ $service->duration_minutes }}"
+                                                aria-pressed="false">
+
+                                            @if ($service->image_path)
+                                                <img
+                                                    src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($service->image_path) }}"
+                                                    alt="{{ $service->name }}"
+                                                    loading="lazy"
+                                                    class="h-36 w-full object-cover transition duration-300 group-hover:scale-[1.02]">
+                                            @else
+                                                <div class="flex h-28 items-center justify-center bg-gradient-to-br from-slate-800 to-slate-950">
+                                                    <i class="fa-solid {{ $businessIcon }} text-3xl accent-text"></i>
+                                                </div>
+                                            @endif
+
+                                            <div class="p-3.5">
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <h4 class="text-sm font-bold text-white">
+                                                        {{ $service->name }}
+                                                    </h4>
+                                                    <i class="fa-regular fa-circle accent-text service-check mt-0.5"></i>
+                                                </div>
+
+                                                @if ($service->description)
+                                                    <p class="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">
+                                                        {{ $service->description }}
+                                                    </p>
+                                                @endif
+
+                                                <div class="mt-3 flex items-center justify-between gap-2">
+                                                    <span class="text-base font-extrabold accent-text">
+                                                        {{ number_format((float) $service->price, 2, ',', '.') }}
+                                                    </span>
+                                                    <span class="text-xs text-slate-400">
+                                                        <i class="fa-regular fa-clock mr-1"></i>
+                                                        {{ $service->duration_minutes }} min
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    @endforeach
+                                </div>
                             @endif
-                        </div>
+
+                            <input type="hidden" name="service_id" id="service_id" value="{{ old('service_id') }}">
+                        </section>
+
+                        <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 sm:p-6">
+                            <div class="mb-5 flex items-center gap-3">
+                                <span class="flex h-9 w-9 items-center justify-center rounded-xl accent-bg font-extrabold">2</span>
+                                <div>
+                                    <h3 class="font-bold text-white">Especialista y horario</h3>
+                                    <p class="text-xs text-slate-400">Los horarios dependen del día y del especialista.</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="employee_id" class="mb-1.5 block text-xs font-semibold text-slate-300">
+                                        Especialista
+                                    </label>
+                                    <select id="employee_id" name="employee_id" required class="form-field">
+                                        <option value="">Selecciona un especialista</option>
+                                        @foreach ($employees as $employee)
+                                            <option value="{{ $employee->id }}"
+                                                @selected(old('employee_id') == $employee->id)>
+                                                {{ $employee->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+
+                                    @if ($employees->isEmpty())
+                                        <p class="mt-2 text-xs text-amber-300">
+                                            No hay especialistas activos disponibles para reservar.
+                                        </p>
+                                    @endif
+                                </div>
+
 
                         <div>
                             <label for="appointment_date" class="mb-1.5 block text-xs font-semibold text-slate-300">
                                 Fecha de la cita
                             </label>
-                            <input
-                                type="date"
-                                id="appointment_date"
-                                name="appointment_date"
-                                min="{{ now()->format('Y-m-d') }}"
-                                value="{{ old('appointment_date', now()->format('Y-m-d')) }}"
-                                required
-                                class="form-field">
-                        </div>
 
-                        <div>
-                            <div class="mb-2 flex items-center justify-between gap-3">
-                                <label class="text-xs font-semibold text-slate-300">
-                                    Horarios disponibles
-                                </label>
-                                <span id="availability-hint" class="text-right text-xs text-slate-500">
-                                    Selecciona servicio, especialista y fecha
-                                </span>
+                            <div class="relative">
+                                <i class="fa-regular fa-calendar-days pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 accent-text"></i>
+
+                                <input
+                                    type="text"
+                                    id="appointment_date"
+                                    name="appointment_date"
+                                    value="{{ old('appointment_date', now()->format('Y-m-d')) }}"
+                                    required
+                                    readonly
+                                    placeholder="Selecciona una fecha"
+                                    class="form-field cursor-pointer pl-11 pr-4"
+                                    autocomplete="off">
                             </div>
 
-                            <div id="time-slots" class="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                                <p class="col-span-full rounded-xl border border-dashed border-slate-700 p-4 text-center text-xs text-slate-500">
-                                    Los horarios aparecerán aquí.
-                                </p>
+                            <p class="mt-2 text-xs text-slate-500">
+                                <i class="fa-solid fa-calendar-check mr-1 accent-text"></i>
+                                Selecciona el día de tu cita en el calendario.
+                            </p>
+                        </div>
+
+
+                                <div>
+                                    <div class="mb-2 flex items-center justify-between gap-3">
+                                        <label class="text-xs font-semibold text-slate-300">
+                                            Horarios disponibles
+                                        </label>
+                                        <span id="availability-hint" class="text-right text-xs text-slate-500">
+                                            Selecciona servicio, especialista y fecha
+                                        </span>
+                                    </div>
+
+                                    <div id="time-slots" class="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                                        <p class="col-span-full rounded-xl border border-dashed border-slate-700 p-4 text-center text-xs text-slate-500">
+                                            Los horarios aparecerán aquí.
+                                        </p>
+                                    </div>
+
+                                    <input type="hidden"
+                                        id="start_time"
+                                        name="start_time"
+                                        value="{{ old('start_time') }}"
+                                        required>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <aside class="space-y-6 lg:sticky lg:top-24">
+                        <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 sm:p-6">
+                            <div class="mb-5 flex items-center gap-3">
+                                <span class="flex h-9 w-9 items-center justify-center rounded-xl accent-bg font-extrabold">3</span>
+                                <div>
+                                    <h3 class="font-bold text-white">Tus datos</h3>
+                                    <p class="text-xs text-slate-400">Para identificar tu reserva.</p>
+                                </div>
                             </div>
 
-                            <input type="hidden"
-                                   id="start_time"
-                                   name="start_time"
-                                   value="{{ old('start_time') }}"
-                                   required>
-                        </div>
-                    </div>
-                </section>
-            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="customer_name" class="mb-1.5 block text-xs font-semibold text-slate-300">
+                                        Nombre y apellido
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="customer_name"
+                                        name="customer_name"
+                                        maxlength="255"
+                                        required
+                                        autocomplete="name"
+                                        value="{{ old('customer_name') }}"
+                                        placeholder="Ej. María González"
+                                        class="form-field">
+                                </div>
 
-            <aside class="space-y-6 lg:sticky lg:top-24">
-                <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 sm:p-6">
-                    <div class="mb-5 flex items-center gap-3">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-xl accent-bg font-extrabold">3</span>
-                        <div>
-                            <h3 class="font-bold text-white">Tus datos</h3>
-                            <p class="text-xs text-slate-400">Para identificar tu reserva.</p>
-                        </div>
-                    </div>
+                                <div>
+                                    <label for="customer_phone" class="mb-1.5 block text-xs font-semibold text-slate-300">
+                                        Número de teléfono
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        id="customer_phone"
+                                        name="customer_phone"
+                                        maxlength="30"
+                                        required
+                                        autocomplete="tel"
+                                        value="{{ old('customer_phone') }}"
+                                        placeholder="Ej. +58 412 1234567"
+                                        class="form-field">
+                                </div>
+                            </div>
+                        </section>
 
-                    <div class="space-y-4">
-                        <div>
-                            <label for="customer_name" class="mb-1.5 block text-xs font-semibold text-slate-300">
-                                Nombre y apellido
-                            </label>
-                            <input
-                                type="text"
-                                id="customer_name"
-                                name="customer_name"
-                                maxlength="255"
-                                required
-                                autocomplete="name"
-                                value="{{ old('customer_name') }}"
-                                placeholder="Ej. María González"
-                                class="form-field">
-                        </div>
+                        <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 sm:p-6">
+                            <h3 class="mb-4 flex items-center gap-2 font-bold text-white">
+                                <i class="fa-solid fa-receipt accent-text"></i>
+                                Resumen de tu cita
+                            </h3>
 
-                        <div>
-                            <label for="customer_phone" class="mb-1.5 block text-xs font-semibold text-slate-300">
-                                Número de teléfono
-                            </label>
-                            <input
-                                type="tel"
-                                id="customer_phone"
-                                name="customer_phone"
-                                maxlength="30"
-                                required
-                                autocomplete="tel"
-                                value="{{ old('customer_phone') }}"
-                                placeholder="Ej. +58 412 1234567"
-                                class="form-field">
-                        </div>
-                    </div>
-                </section>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex items-start justify-between gap-3">
+                                    <span class="text-slate-400">Servicio</span>
+                                    <span id="summary-service" class="text-right font-semibold text-slate-200">Por seleccionar</span>
+                                </div>
+                                <div class="flex items-start justify-between gap-3">
+                                    <span class="text-slate-400">Precio</span>
+                                    <span id="summary-price" class="font-bold accent-text">—</span>
+                                </div>
+                                <div class="flex items-start justify-between gap-3">
+                                    <span class="text-slate-400">Especialista</span>
+                                    <span id="summary-employee" class="text-right text-slate-200">Por seleccionar</span>
+                                </div>
+                                <div class="flex items-start justify-between gap-3">
+                                    <span class="text-slate-400">Fecha</span>
+                                    <span id="summary-date" class="text-right text-slate-200">Por seleccionar</span>
+                                </div>
+                                <div class="flex items-start justify-between gap-3">
+                                    <span class="text-slate-400">Hora</span>
+                                    <span id="summary-time" class="font-bold text-slate-200">Por seleccionar</span>
+                                </div>
+                            </div>
 
-                <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 sm:p-6">
-                    <h3 class="mb-4 flex items-center gap-2 font-bold text-white">
-                        <i class="fa-solid fa-receipt accent-text"></i>
-                        Resumen de tu cita
-                    </h3>
+                            <div class="my-5 border-t border-slate-800"></div>
 
-                    <div class="space-y-3 text-sm">
-                        <div class="flex items-start justify-between gap-3">
-                            <span class="text-slate-400">Servicio</span>
-                            <span id="summary-service" class="text-right font-semibold text-slate-200">Por seleccionar</span>
-                        </div>
-                        <div class="flex items-start justify-between gap-3">
-                            <span class="text-slate-400">Precio</span>
-                            <span id="summary-price" class="font-bold accent-text">—</span>
-                        </div>
-                        <div class="flex items-start justify-between gap-3">
-                            <span class="text-slate-400">Especialista</span>
-                            <span id="summary-employee" class="text-right text-slate-200">Por seleccionar</span>
-                        </div>
-                        <div class="flex items-start justify-between gap-3">
-                            <span class="text-slate-400">Fecha</span>
-                            <span id="summary-date" class="text-right text-slate-200">Por seleccionar</span>
-                        </div>
-                        <div class="flex items-start justify-between gap-3">
-                            <span class="text-slate-400">Hora</span>
-                            <span id="summary-time" class="font-bold text-slate-200">Por seleccionar</span>
-                        </div>
-                    </div>
+                            <button
+                                id="submit-booking"
+                                type="submit"
+                                @disabled($services->isEmpty() || $employees->isEmpty())
+                                class="primary-button flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-extrabold">
+                                <i class="fa-brands fa-whatsapp text-lg"></i>
+                                <span>Confirmar y enviar por WhatsApp</span>
+                            </button>
 
-                    <div class="my-5 border-t border-slate-800"></div>
+                            <p class="mt-3 text-center text-xs leading-5 text-slate-500">
+                                Tu cita se registra en el sistema antes de abrir WhatsApp. El mensaje se enviará cuando lo confirmes desde esa aplicación.
+                            </p>
+                        </section>
+                    </aside>
+                </div>
+            </form>
+    @endif
 
-                    <button
-                        id="submit-booking"
-                        type="submit"
-                        @disabled($services->isEmpty() || $employees->isEmpty())
-                        class="primary-button flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-extrabold">
-                        <i class="fa-brands fa-whatsapp text-lg"></i>
-                        <span>Confirmar y enviar por WhatsApp</span>
-                    </button>
 
-                    <p class="mt-3 text-center text-xs leading-5 text-slate-500">
-                        Tu cita se registra en el sistema antes de abrir WhatsApp. El mensaje se enviará cuando lo confirmes desde esa aplicación.
-                    </p>
-                </section>
-            </aside>
-        </div>
-    </form>
 </main>
 
 <footer class="mt-8 border-t border-slate-900 px-4 py-5 text-center text-xs text-slate-500">
@@ -427,7 +494,34 @@
     Reservas en línea
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 <script>
+
+    flatpickr("#appointment_date", {
+        locale: "es",
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d/m/Y",
+        defaultDate: document.getElementById("appointment_date").value,
+        minDate: "today",
+        disableMobile: true,
+        allowInput: false,
+        monthSelectorType: "static",
+
+        // Deshabilitar sábados y domingos
+        disable: [
+            function (date) {
+                return date.getDay() === 0 || date.getDay() === 6;
+            }
+        ],
+
+        onChange: function () {
+            updateSummary();
+            loadAvailability();
+        }
+    });
+
     const serviceCards = [...document.querySelectorAll('.service-card')];
     const serviceInput = document.getElementById('service_id');
     const employeeInput = document.getElementById('employee_id');

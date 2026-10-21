@@ -110,6 +110,14 @@ Route::middleware('auth')->group(function () {
                 ->name('toggle-status');
         });
 
+    Route::patch(
+        '/negocio/{business}/reservas',
+        [BusinessPanelController::class, 'toggleReservations']
+    )
+        ->whereNumber('business')
+        ->middleware('active-business')
+        ->name('business.reservations.toggle');
+
 
     Route::get('/negocio/{business}', [BusinessPanelController::class, 'show'])
         ->middleware('active-business')

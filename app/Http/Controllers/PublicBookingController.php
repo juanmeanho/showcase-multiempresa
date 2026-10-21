@@ -173,11 +173,12 @@ class PublicBookingController extends Controller
             ]);
         }
 
-        if ($endTime > $settings->closing_time) {
-            throw ValidationException::withMessages([
-                'start_time' => 'El servicio termina fuera del horario del negocio.',
-            ]);
-        }
+        abort_if(
+            ! $business->reservations_enabled,
+            403,
+            'Las reservas están suspendidas para este negocio.'
+        );
+
 
         $appointment = DB::transaction(function () use (
             $business,
